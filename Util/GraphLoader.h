@@ -97,6 +97,7 @@ NodeID readBinaryOSRMGraphFromStream(std::istream &in, std::vector<EdgeT>& edgeL
     }
 
     edgeList.reserve(m);
+    int speed;
     EdgeWeight weight;
     short type;
     NodeID nameID;
@@ -108,13 +109,14 @@ NodeID readBinaryOSRMGraphFromStream(std::istream &in, std::vector<EdgeT>& edgeL
         in.read((char*)&target,             sizeof(unsigned));
         in.read((char*)&length,             sizeof(int));
         in.read((char*)&dir,                sizeof(short));
+        in.read((char*)&speed,              sizeof(int));
         in.read((char*)&weight,             sizeof(int));
         in.read((char*)&type,               sizeof(short));
         in.read((char*)&nameID,             sizeof(unsigned));
         in.read((char*)&isRoundabout,       sizeof(bool));
         in.read((char*)&ignoreInGrid,       sizeof(bool));
         in.read((char*)&isAccessRestricted, sizeof(bool));
-
+        
         GUARANTEE(length > 0, "loaded null length edge" );
         GUARANTEE(weight > 0, "loaded null weight");
         GUARANTEE(0<=dir && dir<=2, "loaded bogus direction");
@@ -149,8 +151,18 @@ NodeID readBinaryOSRMGraphFromStream(std::istream &in, std::vector<EdgeT>& edgeL
             std::swap(source, target);
             std::swap(forward, backward);
         }
-
-        EdgeT inputEdge(source, target, nameID, weight, forward, backward, type, isRoundabout, ignoreInGrid, isAccessRestricted );
+        //INFO( "xxxx read edge, length = " << length );
+        //INFO( "xxxx read edge, speed = " << speed );
+        //INFO( "xxxx read edge, weight = " << weight );
+        
+        double doubleSpeed = speed/100000.0;
+        double doubleWeight = weight/100000.0;
+        weight = ( length * 10. ) / (doubleWeight*doubleSpeed / 3.6);
+        
+        //INFO( "xxxx2 length = " << length );
+        //INFO( "xxxx2 speed = " << speed );
+        //INFO( "xxxx2 weight = " << weight );
+        EdgeT inputEdge(source, target, nameID, speed, weight, forward, backward, type, isRoundabout, ignoreInGrid, isAccessRestricted );
         edgeList.push_back(inputEdge);
     }
     std::sort(edgeList.begin(), edgeList.end());
@@ -188,118 +200,6 @@ NodeID readBinaryOSRMGraphFromStream(std::istream &in, std::vector<EdgeT>& edgeL
     ext2IntNodeMap.clear();
     std::vector<ImportEdge>(edgeList.begin(), newEnd).swap(edgeList); //remove excess candidates.
     INFO("Graph loaded ok and has " << edgeList.size() << " edges");
-    return n;
-}
-template<typename EdgeT>
-NodeID readDTMPGraphFromStream(std::istream &in, std::vector<EdgeT>& edgeList, std::vector<NodeInfo> * int2ExtNodeMap) {
-    NodeID n, source, target, id;
-    EdgeID m;
-    int dir, xcoord, ycoord;// direction (0 = open, 1 = forward, 2+ = open)
-    ExternalNodeMap ext2IntNodeMap;
-    in >> n;
-    DEBUG("Importing n = " << n << " nodes ");
-    for (NodeID i=0; i<n;++i) {
-        in >> id >> ycoord >> xcoord;
-        int2ExtNodeMap->push_back(NodeInfo(xcoord, ycoord, id));
-        ext2IntNodeMap.insert(std::make_pair(id, i));
-    }
-    in >> m;
-    DEBUG(" and " << m << " edges");
-
-    edgeList.reserve(m);
-    for (EdgeID i=0; i<m; ++i) {
-        EdgeWeight weight;
-        unsigned speedType(0);
-        short type(0);
-        // NodeID nameID;
-        int length;
-        in >> source >> target >> length >> dir >> speedType;
-
-        if(dir == 3)
-            dir = 0;
-
-        switch(speedType) {
-        case 1:
-            weight = 130;
-            break;
-        case 2:
-            weight = 120;
-            break;
-        case 3:
-            weight = 110;
-            break;
-        case 4:
-            weight = 100;
-            break;
-        case 5:
-            weight = 90;
-            break;
-        case 6:
-            weight = 80;
-            break;
-        case 7:
-            weight = 70;
-            break;
-        case 8:
-            weight = 60;
-            break;
-        case 9:
-            weight = 50;
-            break;
-        case 10:
-            weight = 40;
-            break;
-        case 11:
-            weight = 30;
-            break;
-        case 12:
-            weight = 20;
-            break;
-        case 13:
-            weight = length;
-            break;
-        case 15:
-            weight = 10;
-            break;
-        default:
-            weight = 0;
-            break;
-        }
-
-        weight = length*weight/3.6;
-        if(speedType == 13)
-            weight = length;
-        assert(length > 0);
-        assert(weight > 0);
-        if(dir <0 || dir > 2)
-            WARN("direction bogus: " << dir);
-        assert(0<=dir && dir<=2);
-
-        bool forward = true;
-        bool backward = true;
-        if (dir == 1) backward = false;
-        if (dir == 2) forward = false;
-
-        if(length == 0) { ERR("loaded null length edge"); }
-
-        //         translate the external NodeIDs to internal IDs
-        ExternalNodeMap::iterator intNodeID = ext2IntNodeMap.find(source);
-        if( ext2IntNodeMap.find(source) == ext2IntNodeMap.end()) {
-            ERR("after " << edgeList.size() << " edges" << "\n->" << source << "," << target << "," << length << "," << dir << "," << weight << "\n->unresolved source NodeID: " << source);
-        }
-        source = intNodeID->second;
-        intNodeID = ext2IntNodeMap.find(target);
-        if(ext2IntNodeMap.find(target) == ext2IntNodeMap.end()) { ERR("unresolved target NodeID : " << target); }
-        target = intNodeID->second;
-
-        if(source == UINT_MAX || target == UINT_MAX) { ERR("nonexisting source or target" ); }
-
-        EdgeT inputEdge(source, target, 0, weight, forward, backward, type );
-        edgeList.push_back(inputEdge);
-    }
-    ext2IntNodeMap.clear();
-    std::vector<ImportEdge>(edgeList.begin(), edgeList.end()).swap(edgeList); //remove excess candidates.
-    std::cout << "ok" << std::endl;
     return n;
 }
 

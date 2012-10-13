@@ -125,6 +125,7 @@ int main (int argc, char *argv[]) {
           .def(luabind::constructor<>())
           .def_readwrite("name", &_Way::name)
           .def_readwrite("speed", &_Way::speed)
+          .def_readwrite("weight", &_Way::weight)
           .def_readwrite("type", &_Way::type)
           .def_readwrite("access", &_Way::access)
           .def_readwrite("roundabout", &_Way::roundabout)

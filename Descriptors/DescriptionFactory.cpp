@@ -20,7 +20,7 @@
 
 #include "DescriptionFactory.h"
 
-DescriptionFactory::DescriptionFactory() : entireLength(0) { }
+DescriptionFactory::DescriptionFactory() : entireLength(0), entireDuration(0) { }
 
 DescriptionFactory::~DescriptionFactory() { }
 
@@ -140,9 +140,10 @@ void DescriptionFactory::Run(const SearchEngineT &sEngine, const unsigned zoomLe
 
 
     for(unsigned i = 1; i < pathDescription.size(); ++i) {
-        entireLength += pathDescription[i].length;
         lengthOfSegment += pathDescription[i].length;
         durationOfSegment += pathDescription[i].duration;
+        entireLength += pathDescription[i].length;
+        entireDuration += pathDescription[i].duration;
         pathDescription[indexOfSegmentBegin].length = lengthOfSegment;
         pathDescription[indexOfSegmentBegin].duration = durationOfSegment;
 

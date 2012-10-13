@@ -64,6 +64,7 @@ public:
     } summary;
 
     double entireLength;
+    double entireDuration;
 
     //I know, declaring this public is considered bad. I'm lazy
     std::vector <SegmentInformation> pathDescription;

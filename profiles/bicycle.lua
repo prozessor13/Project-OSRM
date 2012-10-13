@@ -104,7 +104,7 @@ function way_function (way, numberOfNodesInWay)
 	if(numberOfNodesInWay < 2) then
 		return 0;
 	end
-	
+
 	-- First, get the properties of each way that we come across
 	local highway = way.tags:Find("highway")
 	local name = way.tags:Find("name")
@@ -235,7 +235,13 @@ function way_function (way, numberOfNodesInWay)
 	elseif cycleway_right and cycleway_tags[cycleway_right] then
 		way.speed = main_speeds["cycleway"]
 	end
-
+	
+	if highway=='cycleway' then
+		way.weight = 3
+	else
+		way.weight = 1
+	end
+	
 	way.type = 1
 	return 1
 end

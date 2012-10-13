@@ -70,6 +70,7 @@ EdgeBasedGraphFactory::EdgeBasedGraphFactory(int nodes, std::vector<NodeBasedEdg
         if(edge.source == edge.target)
             continue;
 
+		edge.data.speed = (int)i->speed();
         edge.data.distance = (std::max)((int)i->weight(), 1 );
         assert( edge.data.distance > 0 );
         edge.data.shortcut = false;
@@ -276,6 +277,7 @@ void EdgeBasedGraphFactory::Run(const char * originalEdgeDataFilename) {
                             continue;
                         }
 
+                        unsigned speed = edgeData1.speed;
                         unsigned distance = edgeData1.distance;
                         if(_trafficLights.find(v) != _trafficLights.end()) {
                             distance += speedProfile.trafficSignalPenalty;
@@ -296,7 +298,7 @@ void EdgeBasedGraphFactory::Run(const char * originalEdgeDataFilename) {
                             originalEdgeData.reserve(originalEdgeData.size()*1.2);
                         }
                         OriginalEdgeData oed(v,edgeData2.nameID, turnInstruction);
-                        EdgeBasedEdge newEdge(edgeData1.edgeBasedNodeID, edgeData2.edgeBasedNodeID, edgeBasedEdges.size(), distance, true, false );
+                        EdgeBasedEdge newEdge(edgeData1.edgeBasedNodeID, edgeData2.edgeBasedNodeID, edgeBasedEdges.size(), speed, distance, true, false );
 //                        assert(u != w);
                         originalEdgeData.push_back(oed);
                         if(originalEdgeData.size() > 100000) {

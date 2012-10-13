@@ -45,6 +45,7 @@ struct _Way {
 
         direction = _Way::notSure;
         speed = -1;
+        weight = 1;
         type = -1;
 //        useful = false;
         access = true;
@@ -61,6 +62,7 @@ struct _Way {
     unsigned nameID;
     std::string name;
     double speed;
+    double weight;
     short type;
     bool access;
     bool roundabout;
@@ -80,10 +82,10 @@ struct _Relation {
 };
 
 struct _Edge {
-    _Edge() : start(0), target(0), type(0), direction(0), speed(0), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) {};
-    _Edge(NodeID s, NodeID t) : start(s), target(t), type(0), direction(0), speed(0), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) { }
-    _Edge(NodeID s, NodeID t, short tp, short d, double sp): start(s), target(t), type(tp), direction(d), speed(sp), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) { }
-    _Edge(NodeID s, NodeID t, short tp, short d, double sp, unsigned nid, bool isra, bool iing, bool ids, bool iar): start(s), target(t), type(tp), direction(d), speed(sp), nameID(nid), isRoundabout(isra), ignoreInGrid(iing), isDurationSet(ids), isAccessRestricted(iar) {
+    _Edge() : start(0), target(0), type(0), direction(0), speed(0), weight(0), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) {};
+    _Edge(NodeID s, NodeID t) : start(s), target(t), type(0), direction(0), speed(0), weight(0), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) { }
+    _Edge(NodeID s, NodeID t, short tp, short d, double sp, double we): start(s), target(t), type(tp), direction(d), speed(sp), weight(we), nameID(0), isRoundabout(false), ignoreInGrid(false), isDurationSet(false), isAccessRestricted(false) { }
+    _Edge(NodeID s, NodeID t, short tp, short d, double sp, double we, unsigned nid, bool isra, bool iing, bool ids, bool iar): start(s), target(t), type(tp), direction(d), speed(sp), weight(we), nameID(nid), isRoundabout(isra), ignoreInGrid(iing), isDurationSet(ids), isAccessRestricted(iar) {
         assert(0 <= type);
     }
     NodeID start;
@@ -91,6 +93,7 @@ struct _Edge {
     short type;
     short direction;
     double speed;
+    double weight;
     unsigned nameID;
     bool isRoundabout;
     bool ignoreInGrid;

@@ -57,6 +57,7 @@ function way_function (way, numberOfNodesInWay)
 		way.direction = Way.bidirectional
 	end
 	
+	way.weight = 1
 	way.type = 1
 	return 1
 end

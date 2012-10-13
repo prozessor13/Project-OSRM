@@ -51,6 +51,7 @@
 class EdgeBasedGraphFactory {
 private:
     struct _NodeBasedEdgeData {
+        int speed;
         int distance;
         unsigned edgeBasedNodeID;
         unsigned nameID:31;
@@ -64,6 +65,7 @@ private:
     };
 
     struct _EdgeBasedEdgeData {
+        int speed;
         int distance;
         unsigned via;
         unsigned nameID;
