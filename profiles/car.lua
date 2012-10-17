@@ -220,3 +220,7 @@ function node_vector_function(vector)
   node_function(v)
  end
 end
+
+function turn_function (angle)
+    return 0
+end
