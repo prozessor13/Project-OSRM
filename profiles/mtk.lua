@@ -70,17 +70,19 @@ u_turn_penalty      = 20
 -- End of globals
 
 -- read networks
-require 'stringy'
 networks = {}
-fname = string.gsub(osmFileName, ".osm.pbf", ".osrm.networks");
-f = io.open(fname, "r")
-if (f) then
-  for line in f:lines() do
-    l = stringy.split(line, ",")
-    type = table.remove(l, 1)
-    networks[type] = {}
-    for i, v in ipairs(l) do
-      networks[type][v] = 1
+if (osmFileName) then
+  require 'stringy'
+  fname = string.gsub(osmFileName, ".osm.pbf", ".osrm.networks");
+  f = io.open(fname, "r")
+  if (f) then
+    for line in f:lines() do
+      l = stringy.split(line, ",")
+      type = table.remove(l, 1)
+      networks[type] = {}
+      for i, v in ipairs(l) do
+        networks[type][v] = 1
+      end
     end
   end
 end

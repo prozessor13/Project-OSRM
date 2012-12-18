@@ -118,7 +118,7 @@ int main (int argc, char *argv[]) {
 
     // Connect LuaBind to this lua state
     luabind::open(myLuaState);
-
+    luaL_openlibs(myLuaState);
 
     // Now call our function in a lua script
     INFO("Parsing speedprofile from " << (argc > 3 ? argv[3] : "profile.lua") );
@@ -137,7 +137,6 @@ int main (int argc, char *argv[]) {
         ERR(lua_tostring(myLuaState,-1)<< " occured in scripting block");
     }
     speedProfile.uTurnPenalty = 10*lua_tointeger(myLuaState, -1);
-
 
 
     std::vector<ImportEdge> edgeList;
