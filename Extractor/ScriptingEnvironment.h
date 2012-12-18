@@ -27,6 +27,7 @@ extern "C" {
 #include <lualib.h>
 }
 #include <luabind/luabind.hpp>
+#include <luabind/iterator_policy.hpp>
 
 #include "ExtractionHelperFunctions.h"
 #include "ExtractorStructs.h"
@@ -37,7 +38,7 @@ extern "C" {
 class ScriptingEnvironment {
 public:
     ScriptingEnvironment();
-    ScriptingEnvironment(const char * fileName);
+    ScriptingEnvironment(const char * fileName, const char * osmFileName);
     virtual ~ScriptingEnvironment();
 
     lua_State * getLuaStateForThreadID(const int);

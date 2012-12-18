@@ -44,7 +44,7 @@ int main (int argc, char *argv[]) {
     }
 
     /*** Setup Scripting Environment ***/
-    ScriptingEnvironment scriptingEnvironment((argc > 2 ? argv[2] : "profile.lua"));
+    ScriptingEnvironment scriptingEnvironment((argc > 2 ? argv[2] : "profile.lua"), argv[1]);
 
     unsigned numberOfThreads = omp_get_num_procs();
     if(testDataFile("extractor.ini")) {

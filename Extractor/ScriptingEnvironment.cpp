@@ -31,7 +31,7 @@ extern "C" {
 #include "../Util/OpenMPWrapper.h"
 
 ScriptingEnvironment::ScriptingEnvironment() {}
-ScriptingEnvironment::ScriptingEnvironment(const char * fileName) {
+ScriptingEnvironment::ScriptingEnvironment(const char * fileName, const char * osmFileName) {
 	INFO("Using script " << fileName);
 
     // Create a new lua state
@@ -45,6 +45,8 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName) {
         luabind::open(myLuaState);
         //open utility libraries string library;
         luaL_openlibs(myLuaState);
+
+        luabind::globals(myLuaState)["osmFileName"] = osmFileName;
 
         // Add our function to the state's global scope
         luabind::module(myLuaState) [
@@ -83,6 +85,7 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName) {
         luabind::module(myLuaState) [
                                      luabind::class_<_Way>("Way")
                                      .def(luabind::constructor<>())
+                                     .def_readwrite("id", &_Way::id)
                                      .def_readwrite("name", &_Way::name)
                                      .def_readwrite("speed", &_Way::speed)
                                      .def_readwrite("type", &_Way::type)
@@ -91,6 +94,7 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName) {
                                      .def_readwrite("is_duration_set", &_Way::isDurationSet)
                                      .def_readwrite("is_access_restricted", &_Way::isAccessRestricted)
                                      .def_readwrite("ignore_in_grid", &_Way::ignoreInGrid)
+                                     .def_readwrite("path", &_Way::path, luabind::return_stl_iterator)
                                      .def_readwrite("tags", &_Way::keyVals)
                                      .def_readwrite("direction", &_Way::direction)
                                      .enum_("constants")
