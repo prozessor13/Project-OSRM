@@ -51,7 +51,7 @@ public:
 		NodeInfo b;
 	    while(!nodesInstream.eof()) {
 			nodesInstream.read((char *)&b, sizeof(NodeInfo));
-			coordinateVector.push_back(_Coordinate(b.lat, b.lon));
+         coordinateVector.push_back(_Coordinate(b.lat, b.lon, b.id));
 		}
 	    std::vector<_Coordinate>(coordinateVector).swap(coordinateVector);
 	    nodesInstream.close();
@@ -80,6 +80,11 @@ public:
         const NodeID node = origEdgeData.at(id).viaNode;
 	    return coordinateVector.at(node).lon;
 	}
+
+   inline int getIdOfNode(const unsigned id) const {
+        const NodeID node = origEdgeData.at(id).viaNode;
+       return coordinateVector.at(node).id;
+   }
 
 	inline unsigned getNameIndexFromEdgeID(const unsigned id) const {
 	    return origEdgeData.at(id).nameID;
