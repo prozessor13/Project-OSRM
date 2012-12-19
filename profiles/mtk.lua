@@ -18,15 +18,15 @@ main_speeds = {
   ["tertiary"] = 18,
   ["tertiary_link"] = 18,
   ["residential"] = 18,
-  ["unclassified"] = 16,
-  ["living_street"] = 16,
-  ["road"] = 16,
-  ["service"] = 16,
-  ["track"] = 13,
-  ["path"] = 13,
-  ["footway"] = 12,
-  ["pedestrian"] = 12,
-  ["pier"] = 12,
+  ["unclassified"] = 18,
+  ["living_street"] = 18,
+  ["road"] = 18,
+  ["service"] = 18,
+  ["track"] = 16,
+  ["path"] = 16,
+  ["footway"] = 16,
+  ["pedestrian"] = 5,
+  ["pier"] = 16,
   ["steps"] = 2
 }
 
@@ -81,7 +81,7 @@ if (osmFileName) then
       type = table.remove(l, 1)
       networks[type] = {}
       for i, v in ipairs(l) do
-        networks[type][v] = 1
+        networks[type][tonumber(v)] = 1
       end
     end
   end
@@ -278,9 +278,12 @@ function way_function (way, numberOfNodesInWay)
   end
 
   -- priorize bike relations
-  if networks.lcn and networks.lcn[way.id] then way.speed = way.speed + 2 end
-  if networks.rcn and networks.rcn[way.id] or networks.ncn and networks.ncn[way.id] then way.speed = way.speed + 4 end
-
+  speed_delta = 0
+  if networks.lcn and networks.lcn[way.id] then speed_delta = 4 end
+  if networks.rcn and networks.rcn[way.id] then speed_delta = 6 end
+  if networks.ncn and networks.ncn[way.id] then speed_delta = 8 end
+  way.speed = way.speed + speed_delta
+  
   way.type = 1
   return 1
 end
