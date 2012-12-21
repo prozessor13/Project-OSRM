@@ -235,19 +235,18 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
                     edgeIT->targetCoord.id = nodesIT->id;
                     edgeIT->targetCoord.altitude = nodesIT->altitude;
 
-                    double distance = ApproximateDistance(edgeIT->startCoord.lat, edgeIT->startCoord.lon, nodesIT->lat, nodesIT->lon);
                     assert(edgeIT->speed != -1);
-                    double weight = ( distance * 10. ) / (edgeIT->speed / 3.6);
-                    int intWeight = std::max(1, (int)std::floor((edgeIT->isDurationSet ? edgeIT->speed : weight)+.5) );
-
+                    assert(edgeIT->type >= 0);
+                    double distance = ApproximateDistance(edgeIT->startCoord.lat, edgeIT->startCoord.lon, nodesIT->lat, nodesIT->lon);
 
                     if (have_segment_function) try {
                         luabind::object r = luabind::call_function<luabind::object> (
                             myLuaState,
                             "segment_function",
-                            *edgeIT,
+                            boost::ref(*edgeIT),
                             edgeIT->startCoord,
-                            edgeIT->targetCoord
+                            edgeIT->targetCoord,
+                            distance
                         );
                     } catch (const luabind::error &er) {
                         lua_State* Ler=er.state();
@@ -255,41 +254,68 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
                         lua_pop(Ler, 1); // remove error message
                         ERR(er.what());
                     }
+
+                    double weight = ( distance * 10. ) / (edgeIT->speed / 3.6);
+                    double weightBackward = ( distance * 10. ) / (((edgeIT->speedBackward == -1) ? edgeIT->speed : edgeIT->speedBackward) / 3.6);
                     int intDist = std::max(1, (int)distance);
-                    short zero = 0;
-                    short one = 1;
+                    int intWeight = std::max(1, (int)std::floor((edgeIT->isDurationSet ? edgeIT->speed : weight)+.5) );
+                    int intWeightBackward = std::max(1, (int)std::floor((edgeIT->isDurationSet ? ((edgeIT->speedBackward == -1) ? edgeIT->speed : edgeIT->speedBackward) : weightBackward)+.5) );
+                    short zero = 0, one = 1;
 
-                    fout.write((char*)&edgeIT->start, sizeof(unsigned));
-                    fout.write((char*)&edgeIT->target, sizeof(unsigned));
-                    fout.write((char*)&intDist, sizeof(int));
-                    switch(edgeIT->direction) {
-                    case _Way::notSure:
-                        fout.write((char*)&zero, sizeof(short));
-                        break;
-                    case _Way::oneway:
+                    // hack create 2 edges of type oneway for different weight and weightBackward
+                    if (intWeight != intWeightBackward && edgeIT->direction == _Way::bidirectional) {
+                        fout.write((char*)&edgeIT->start, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->target, sizeof(unsigned));
+                        fout.write((char*)&intDist, sizeof(int));
                         fout.write((char*)&one, sizeof(short));
-                        break;
-                    case _Way::bidirectional:
-                        fout.write((char*)&zero, sizeof(short));
+                        fout.write((char*)&intWeight, sizeof(int));
+                        fout.write((char*)&edgeIT->type, sizeof(short));
+                        fout.write((char*)&edgeIT->nameID, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->isRoundabout, sizeof(bool));
+                        fout.write((char*)&edgeIT->ignoreInGrid, sizeof(bool));
+                        fout.write((char*)&edgeIT->isAccessRestricted, sizeof(bool));
+                        ++usedEdgeCounter;
 
-                        break;
-                    case _Way::opposite:
+                        fout.write((char*)&edgeIT->target, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->start, sizeof(unsigned));
+                        fout.write((char*)&intDist, sizeof(int));
                         fout.write((char*)&one, sizeof(short));
-                        break;
-                    default:
-                        cerr << "[error] edge with no direction: " << edgeIT->direction << endl;
-                        assert(false);
-                        break;
+                        fout.write((char*)&intWeightBackward, sizeof(int));
+                        fout.write((char*)&edgeIT->type, sizeof(short));
+                        fout.write((char*)&edgeIT->nameID, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->isRoundabout, sizeof(bool));
+                        fout.write((char*)&edgeIT->ignoreInGrid, sizeof(bool));
+                        fout.write((char*)&edgeIT->isAccessRestricted, sizeof(bool));
+                        ++usedEdgeCounter;
+
+                    } else {
+                        fout.write((char*)&edgeIT->start, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->target, sizeof(unsigned));
+                        fout.write((char*)&intDist, sizeof(int));
+                        switch(edgeIT->direction) {
+                        case _Way::notSure:
+                        case _Way::bidirectional:
+                            fout.write((char*)&zero, sizeof(short));
+                            break;
+                        case _Way::oneway:
+                        case _Way::opposite:
+                            // FIXME! may switch intWeight and intWeightBackward in case of opposite
+                            fout.write((char*)&one, sizeof(short));
+                            break;
+                        default:
+                            cerr << "[error] edge with no direction: " << edgeIT->direction << endl;
+                            assert(false);
+                            break;
+                        }
+                        fout.write((char*)&intWeight, sizeof(int));
+                        fout.write((char*)&edgeIT->type, sizeof(short));
+                        fout.write((char*)&edgeIT->nameID, sizeof(unsigned));
+                        fout.write((char*)&edgeIT->isRoundabout, sizeof(bool));
+                        fout.write((char*)&edgeIT->ignoreInGrid, sizeof(bool));
+                        fout.write((char*)&edgeIT->isAccessRestricted, sizeof(bool));
+                        ++usedEdgeCounter;
                     }
-                    fout.write((char*)&intWeight, sizeof(int));
-                    assert(edgeIT->type >= 0);
-                    fout.write((char*)&edgeIT->type, sizeof(short));
-                    fout.write((char*)&edgeIT->nameID, sizeof(unsigned));
-                    fout.write((char*)&edgeIT->isRoundabout, sizeof(bool));
-                    fout.write((char*)&edgeIT->ignoreInGrid, sizeof(bool));
-                    fout.write((char*)&edgeIT->isAccessRestricted, sizeof(bool));
                 }
-                ++usedEdgeCounter;
                 ++edgeIT;
             }
         }
@@ -315,17 +341,6 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
 
         nameOutFile.close();
         cout << "ok, after " << get_timestamp() - time << "s" << endl;
-
-        //        time = get_timestamp();
-        //        cout << "[extractor] writing address list      ... " << flush;
-        //
-        //        adressFileName.append(".address");
-        //        ofstream addressOutFile(adressFileName.c_str());
-        //        for(STXXLAddressVector::iterator it = adressVector.begin(); it != adressVector.end(); it++) {
-        //            addressOutFile << it->node.id << "|" << it->node.lat << "|" << it->node.lon << "|" << it->city << "|" << it->street << "|" << it->housenumber << "|" << it->state << "|" << it->country << "\n";
-        //        }
-        //        addressOutFile.close();
-        //        cout << "ok, after " << get_timestamp() - time << "s" << endl;
 
         INFO("Processed " << usedNodeCounter << " nodes and " << usedEdgeCounter << " edges");
 
