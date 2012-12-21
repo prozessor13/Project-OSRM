@@ -1,3 +1,6 @@
+require("profiles/lib/dem")
+
+
 -- Begin of globals
 barrier_whitelist = { [""] = true, ["bollard"] = true, ["entrance"] = true, ["cattle_grid"] = true, ["border_control"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true}
 access_tag_whitelist = { ["yes"] = true, ["permissive"] = true, ["designated"] = true }
@@ -26,6 +29,7 @@ main_speeds = {
   ["path"] = 16,
   ["footway"] = 16,
   ["pedestrian"] = 5,
+  ["pushbike"] = 5,
   ["pier"] = 16,
   ["steps"] = 2
 }
@@ -87,6 +91,18 @@ if (osmFileName) then
   end
 end
 
+function slower(speed, k)
+  k = k / 15 + 1
+  if k > 3 then k = 3 end
+  return speed / k
+end
+
+function faster(speed, k)
+  k = k / 30 + 1
+  if k > 1.5 then k = 1.5 end
+  return speed * k
+end
+
 --find first tag in access hierachy which is set
 function find_access_tag(source)
   for i,v in ipairs(access_tags_hierachy) do 
@@ -123,7 +139,31 @@ function node_function (node)
     end
   end
   
+  node.altitude = altitude(node.lat/100000, node.lon/100000)
+
   return 1
+end
+
+function segment_function (segment, startNode, targetNode, distance)
+  -- check if altigude data is available
+  if startNode.altitude <= 0 or targetNode.altitude <= 0 then return end
+
+  -- calculate grade and do nothing for relative flat segments
+  local k = (targetNode.altitude - startNode.altitude) / distance * 100;
+  -- io.stderr:write("alt: " .. startNode.altitude .. "," .. targetNode.altitude .. ": " .. k .. "\n")
+  if k >= -1 and k <= 1 then return end
+
+  -- increase / decrease speeds
+  -- io.stderr:write("speed1: " .. segment.speed .. " -- " .. segment.speed_backward .. "\n")
+  if segment.speed_backward == -1 then segment.speed_backward = segment.speed end
+  if (k > 1) then
+    segment.speed = slower(segment.speed, k)
+    segment.speed_backward = faster(segment.speed_backward, k)
+  elseif (k < 1) then
+    segment.speed = faster(segment.speed, -k)
+    segment.speed_backward = slower(segment.speed_backward, -k)
+  end
+  -- io.stderr:write("speed2: " .. segment.speed .. " -- " .. segment.speed_backward .. "\n")
 end
 
 function way_function (way, numberOfNodesInWay)
@@ -268,6 +308,12 @@ function way_function (way, numberOfNodesInWay)
     way.direction = Way.oneway
   end
   
+  -- push bikes again oneways
+  if way.direction == Way.oneway then
+    way.direction = Way.bidirectional
+    way.speed_backward = main_speeds["pushbike"]
+  end
+
   -- cycleways
   if cycleway and cycleway_tags[cycleway] then
     way.speed = main_speeds["cycleway"]
