@@ -84,11 +84,21 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName, const char * o
                                      ];
 
         luabind::module(myLuaState) [
+                                     luabind::class_<_Coordinate>("Coordinate")
+                                     .def(luabind::constructor<>())
+                                     .def_readwrite("lat", &_Coordinate::lat)
+                                     .def_readwrite("lon", &_Coordinate::lon)
+                                     .def_readwrite("id", &_Coordinate::id)
+                                     .def_readwrite("altitude", &_Coordinate::altitude)
+                                     ];
+
+        luabind::module(myLuaState) [
                                      luabind::class_<_Way>("Way")
                                      .def(luabind::constructor<>())
                                      .def_readwrite("id", &_Way::id)
                                      .def_readwrite("name", &_Way::name)
                                      .def_readwrite("speed", &_Way::speed)
+                                     .def_readwrite("speed_backward", &_Way::speedBackward)
                                      .def_readwrite("type", &_Way::type)
                                      .def_readwrite("access", &_Way::access)
                                      .def_readwrite("roundabout", &_Way::roundabout)
@@ -98,20 +108,30 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName, const char * o
                                      .def_readwrite("path", &_Way::path, luabind::return_stl_iterator)
                                      .def_readwrite("tags", &_Way::keyVals)
                                      .def_readwrite("direction", &_Way::direction)
-                                     .enum_("constants")
-                                     [
-                                      luabind::value("notSure", 0),
-                                      luabind::value("oneway", 1),
-                                      luabind::value("bidirectional", 2),
-                                      luabind::value("opposite", 3)
-        ]
-        ];
+                                     .enum_("constants") [
+                                        luabind::value("notSure", 0),
+                                        luabind::value("oneway", 1),
+                                        luabind::value("bidirectional", 2),
+                                        luabind::value("opposite", 3)
+                                     ]
+                                    ];
 
-        // Now call our function in a lua script
-//#pragma omp critical
-//        {
-//            INFO("Parsing speedprofile from " << fileName );
-//        }
+        luabind::module(myLuaState) [
+                                     luabind::class_<_Edge>("Edge")
+                                     .def(luabind::constructor<>())
+                                     .def_readwrite("start", &_Edge::start)
+                                     .def_readwrite("target", &_Edge::target)
+                                     .def_readwrite("type", &_Edge::type)
+                                     .def_readwrite("direction", &_Edge::direction)
+                                     .def_readwrite("speed", &_Edge::speed)
+                                     .def_readwrite("speed_backward", &_Edge::speedBackward)
+                                     .def_readwrite("name_id", &_Edge::nameID)
+                                     .def_readwrite("is_roundabout", &_Edge::isRoundabout)
+                                     .def_readwrite("is_duration_set", &_Edge::isDurationSet)
+                                     .def_readwrite("is_access_restricted", &_Edge::isAccessRestricted)
+                                     .def_readwrite("ignore_in_grid", &_Edge::ignoreInGrid)
+                                    ];
+
         if(0 != luaL_dofile(myLuaState, fileName) ) {
             ERR(lua_tostring(myLuaState,-1)<< " occured in scripting block");
         }
