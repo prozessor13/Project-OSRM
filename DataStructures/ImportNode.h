@@ -26,8 +26,9 @@ or see http://www.gnu.org/licenses/agpl.txt.
 
 
 struct _Node : NodeInfo{
-    _Node(int _lat, int _lon, unsigned int _id, bool _bollard, bool _trafficLight) : NodeInfo(_lat, _lon,  _id), bollard(_bollard), trafficLight(_trafficLight) {}
-    _Node() : bollard(false), trafficLight(false) {}
+    _Node(int _lat, int _lon, unsigned int _id, int _altitude, bool _bollard, bool _trafficLight) : NodeInfo(_lat, _lon,  _id), bollard(_bollard), trafficLight(_trafficLight), altitude(_altitude) {}
+    _Node(int _lat, int _lon, unsigned int _id, bool _bollard, bool _trafficLight) : NodeInfo(_lat, _lon,  _id), bollard(_bollard), trafficLight(_trafficLight), altitude(0) {}
+    _Node() : bollard(false), trafficLight(false), altitude(0) {}
 
     static _Node min_value() {
         return _Node(0,0,0, false, false);
@@ -40,6 +41,7 @@ struct _Node : NodeInfo{
     }
     bool bollard;
     bool trafficLight;
+    int altitude;
 };
 
 struct ImportNode : public _Node {
@@ -47,7 +49,7 @@ struct ImportNode : public _Node {
 	
 	inline void Clear() {
 		keyVals.EraseAll();
-		lat = 0; lon = 0; id = 0; bollard = false; trafficLight = false;
+		lat = 0; lon = 0; id = 0; bollard = false; trafficLight = false, altitude = 0;
 	}
 };
 

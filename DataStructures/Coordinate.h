@@ -29,13 +29,16 @@ struct _Coordinate {
     int lat;
     int lon;
     NodeID id;
-    _Coordinate () : lat(INT_MIN), lon(INT_MIN), id(0) {}
-    _Coordinate (int t, int n) : lat(t) , lon(n), id(0) {}
-    _Coordinate (int t, int n, NodeID _id) : lat(t) , lon(n), id(_id) {}
+    int altitude;
+    _Coordinate () : lat(INT_MIN), lon(INT_MIN), id(0), altitude(0) {}
+    _Coordinate (int t, int n) : lat(t) , lon(n), id(0), altitude(0) {}
+    _Coordinate (int t, int n, NodeID _id) : lat(t) , lon(n), id(_id), altitude(0) {}
+    _Coordinate (int t, int n, NodeID _id, int _a) : lat(t) , lon(n), id(_id), altitude(_a) {}
     void Reset() {
         lat = INT_MIN;
         lon = INT_MIN;
         id = 0;
+        altitude = 0;
     }
     bool isSet() const {
         return (INT_MIN != lat) && (INT_MIN != lon);
@@ -52,7 +55,7 @@ struct _Coordinate {
 };
 
 inline std::ostream & operator<<(std::ostream & out, const _Coordinate & c){
-    out << "(" << c.lat << "," << c.lon << "," << c.id << ")";
+    out << "(" << c.lat << "," << c.lon << "," << c.id << "," << c.altitude << ")";
     return out;
 }
 

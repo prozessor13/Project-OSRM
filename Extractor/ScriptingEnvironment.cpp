@@ -79,6 +79,7 @@ ScriptingEnvironment::ScriptingEnvironment(const char * fileName, const char * o
                                      .def_readwrite("id", &ImportNode::id)
                                      .def_readwrite("bollard", &ImportNode::bollard)
                                      .def_readwrite("traffic_light", &ImportNode::trafficLight)
+                                     .def_readwrite("altitude", &ImportNode::altitude)
                                      .def_readwrite("tags", &ImportNode::keyVals)
                                      ];
 
