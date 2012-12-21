@@ -20,7 +20,18 @@
 
 #include "ExtractionContainers.h"
 
-void ExtractionContainers::PrepareData(const std::string & outputFileName, const std::string restrictionsFileName, const unsigned amountOfRAM) {
+// from: https://raw.github.com/DennisOSRM/Project-OSRM/639d325b4b79e55f6f03f8582137cb2d39c9fd30/Util/Lua.h
+// todo: remove again and include Util/Lua.h after rebase
+static
+bool lua_function_exists(lua_State* lua_state, const char* name)
+{
+    using namespace luabind;
+    object g = globals(lua_state);
+    object func = g[name];
+    return func && type(func) == LUA_TFUNCTION;
+}
+
+void ExtractionContainers::PrepareData(const std::string & outputFileName, const std::string restrictionsFileName, const unsigned amountOfRAM, lua_State *myLuaState) {
     try {
         unsigned usedNodeCounter = 0;
         unsigned usedEdgeCounter = 0;
@@ -188,6 +199,8 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
             if(edgeIT->start == nodesIT->id) {
                 edgeIT->startCoord.lat = nodesIT->lat;
                 edgeIT->startCoord.lon = nodesIT->lon;
+                edgeIT->startCoord.id = nodesIT->id;
+                edgeIT->startCoord.altitude = nodesIT->altitude;
                 ++edgeIT;
             }
         }
@@ -205,6 +218,7 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
         nodesIT = allNodes.begin();
         edgeIT = allEdges.begin();
 
+        bool have_segment_function = lua_function_exists(myLuaState, "segment_function");
         while(edgeIT != allEdges.end() && nodesIT != allNodes.end()) {
             if(edgeIT->target < nodesIT->id){
                 ++edgeIT;
@@ -218,11 +232,29 @@ void ExtractionContainers::PrepareData(const std::string & outputFileName, const
                 if(edgeIT->startCoord.lat != INT_MIN && edgeIT->startCoord.lon != INT_MIN) {
                     edgeIT->targetCoord.lat = nodesIT->lat;
                     edgeIT->targetCoord.lon = nodesIT->lon;
+                    edgeIT->targetCoord.id = nodesIT->id;
+                    edgeIT->targetCoord.altitude = nodesIT->altitude;
 
                     double distance = ApproximateDistance(edgeIT->startCoord.lat, edgeIT->startCoord.lon, nodesIT->lat, nodesIT->lon);
                     assert(edgeIT->speed != -1);
                     double weight = ( distance * 10. ) / (edgeIT->speed / 3.6);
                     int intWeight = std::max(1, (int)std::floor((edgeIT->isDurationSet ? edgeIT->speed : weight)+.5) );
+
+
+                    if (have_segment_function) try {
+                        luabind::object r = luabind::call_function<luabind::object> (
+                            myLuaState,
+                            "segment_function",
+                            *edgeIT,
+                            edgeIT->startCoord,
+                            edgeIT->targetCoord
+                        );
+                    } catch (const luabind::error &er) {
+                        lua_State* Ler=er.state();
+                        std::cerr << "-- " << lua_tostring(Ler, -1) << std::endl;
+                        lua_pop(Ler, 1); // remove error message
+                        ERR(er.what());
+                    }
                     int intDist = std::max(1, (int)distance);
                     short zero = 0;
                     short one = 1;
