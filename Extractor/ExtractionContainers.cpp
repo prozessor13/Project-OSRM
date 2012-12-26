@@ -19,17 +19,7 @@
  */
 
 #include "ExtractionContainers.h"
-
-// from: https://raw.github.com/DennisOSRM/Project-OSRM/639d325b4b79e55f6f03f8582137cb2d39c9fd30/Util/Lua.h
-// todo: remove again and include Util/Lua.h after rebase
-static
-bool lua_function_exists(lua_State* lua_state, const char* name)
-{
-    using namespace luabind;
-    object g = globals(lua_state);
-    object func = g[name];
-    return func && type(func) == LUA_TFUNCTION;
-}
+#include "../Util/Lua.h"
 
 void ExtractionContainers::PrepareData(const std::string & outputFileName, const std::string restrictionsFileName, const unsigned amountOfRAM, lua_State *myLuaState) {
     try {
