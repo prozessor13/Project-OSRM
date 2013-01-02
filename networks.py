@@ -14,11 +14,11 @@ outfile = sys.argv[1].replace('.osm.pbf', '.osrm.networks')
 
 # simple class that handles the parsed OSM data.
 class Relation(object):
-    networks = {'rcn': [], 'lcn': [], 'ncn': []}
+    networks = {'icn': [], 'rcn': [], 'lcn': [], 'ncn': []}
 
     def check(self, relations):
         for osmid, tags, refs in relations:
-            if tags.get('network') and tags['network'] in ('rcn', 'ncn', 'lcn'):
+            if tags.get('network') and tags['network'] in ('icn', 'rcn', 'ncn', 'lcn'):
                 for r in refs: self.networks[tags['network']].append(r[0])
 
     def save(self, fname):

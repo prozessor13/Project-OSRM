@@ -1,4 +1,3 @@
--- FIXME! cache data
 require("math")
 require("pack")
 
@@ -11,9 +10,12 @@ end
 
 function altitude(lat, lon)
   local fname = fname(lat, lon)
+  if _f[fname] == -1 then return 0 end
   if not _f[fname] then
     local f = io.open(fname ,"rb")
     if not f then
+      print("missing DEM file: " .. fname)
+      _f[fname] = -1
       return 0
     else
       _f[fname] = f
