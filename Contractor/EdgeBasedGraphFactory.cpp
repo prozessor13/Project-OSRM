@@ -253,6 +253,7 @@ void EdgeBasedGraphFactory::Run(const char * originalEdgeDataFilename, lua_State
             _NodeBasedDynamicGraph::NodeIterator v = _nodeBasedGraph->GetTarget(e1);
             //EdgeWeight heightPenalty = ComputeHeightPenalty(u, v);
             NodeID onlyToNode = CheckForEmanatingIsOnlyTurn(u, v);
+            unsigned numEdges = _nodeBasedGraph->EndEdges(v) - _nodeBasedGraph->BeginEdges(v);
             for(_NodeBasedDynamicGraph::EdgeIterator e2 = _nodeBasedGraph->BeginEdges(v); e2 < _nodeBasedGraph->EndEdges(v); ++e2) {
                 const _NodeBasedDynamicGraph::NodeIterator w = _nodeBasedGraph->GetTarget(e2);
 
@@ -283,11 +284,13 @@ void EdgeBasedGraphFactory::Run(const char * originalEdgeDataFilename, lua_State
 
                         unsigned penalty = 0;
                         short turnInstruction = AnalyzeTurn(u, v, w, penalty, myLuaState);
-                        distance += penalty;
+                        if ( turnInstruction == TurnInstructions.UTurn ) {
+                            distance += speedProfile.uTurnPenalty;
+                        } else if ( numEdges > 2 ) {
+                            distance += penalty;
+                        }
 
                         // short turnInstruction = AnalyzeTurn(u, v, w);
-                        // if(turnInstruction == TurnInstructions.UTurn)
-                        //     distance += speedProfile.uTurnPenalty;
 //                        if(!edgeData1.isAccessRestricted && edgeData2.isAccessRestricted) {
 //                            distance += TurnInstructions.AccessRestrictionPenalty;
 //                            turnInstruction |= TurnInstructions.AccessRestrictionFlag;
@@ -341,7 +344,11 @@ void EdgeBasedGraphFactory::Run(const char * originalEdgeDataFilename, lua_State
 
 short EdgeBasedGraphFactory::AnalyzeTurn(const NodeID u, const NodeID v, const NodeID w, unsigned& penalty, lua_State *myLuaState) const {
     double angle = GetAngleBetweenTwoEdges(inputNodeInfoList[u], inputNodeInfoList[v], inputNodeInfoList[w]);
-    
+
+    if( u == w ) {
+        return TurnInstructions.UTurn;
+    }
+
     if( speedProfile.hasTurnFunction ) {
         try {
             //call lua profile to compute turn penalty
@@ -354,10 +361,6 @@ short EdgeBasedGraphFactory::AnalyzeTurn(const NodeID u, const NodeID v, const N
         }
     } else {
         penalty = 0;
-    }
-
-    if(u == w) {
-        return TurnInstructions.UTurn;
     }
 
     _NodeBasedDynamicGraph::EdgeIterator edge1 = _nodeBasedGraph->FindEdge(u, v);
