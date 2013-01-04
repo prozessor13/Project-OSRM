@@ -63,20 +63,20 @@ route_speeds = {
   ["ferry"] = 5
 }
 
-take_minimum_of_speeds  = true
-obey_oneway       = true
-obey_bollards       = false
-use_restrictions    = true
-ignore_areas      = true -- future feature
-traffic_signal_penalty  = 2
-u_turn_penalty      = 20
-turn_penalty      = 60
-turn_bias               = 1.4
+take_minimum_of_speeds    = true
+obey_oneway               = true
+obey_bollards             = false
+use_restrictions          = true
+ignore_areas              = true -- future feature
+traffic_signal_penalty    = 2
+u_turn_penalty            = 20
+turn_penalty              = 15
+turn_bias                 = 1.4
 
 -- End of globals
 
 -- read networks
-networks = {}
+networks = { lcn={}, rcn={}, ncn={}, icn={} }
 if (osmFileName) then
   require 'stringy'
   fname = string.gsub(osmFileName, ".osm.pbf", ".osrm.networks");
@@ -85,9 +85,8 @@ if (osmFileName) then
     for line in f:lines() do
       l = stringy.split(line, ",")
       type = table.remove(l, 1)
-      networks[type] = {}
       for i, v in ipairs(l) do
-        networks[type][tonumber(v)] = 1
+        if tonumber(v) then networks[type][tonumber(v)] = 1 end
       end
     end
   end
@@ -169,10 +168,6 @@ function segment_function (segment, startNode, targetNode, distance)
 end
 
 function way_function (way, numberOfNodesInWay)
-  -- for p in way.path do
-  --   io.stderr:write(p .. "\n")
-  -- end
-  
   -- A way must have two nodes or more
   if(numberOfNodesInWay < 2) then
     return 0;
@@ -197,6 +192,10 @@ function way_function (way, numberOfNodesInWay)
   local service = way.tags:Find("service")
   local area = way.tags:Find("area")
   local amenity = way.tags:Find("amenity")
+  local lcn = way.tags:Find("lcn")
+  local rcn = way.tags:Find("rcn")
+  local ncn = way.tags:Find("ncn")
+  local icn = way.tags:Find("icn")
   local access = find_access_tag(way)
   
   -- only route on things with highway tag set (not buildings, boundaries, etc)
@@ -221,7 +220,7 @@ function way_function (way, numberOfNodesInWay)
     way.name = highway    -- if no name exists, use way type
   end
   
-    if route_speeds[route] then
+  if route_speeds[route] then
     -- ferries
     way.direction = Way.bidirectional
     way.ignore_in_grid = true
@@ -230,15 +229,6 @@ function way_function (way, numberOfNodesInWay)
       way.is_duration_set = true
     else
       way.speed = route_speeds[route]
-    end
-  elseif railway and platform_speeds[railway] then
-    -- railway platforms
-    way.speed = platform_speeds[railway]
-    elseif railway and railway_speeds[railway] then
-    -- railways
-    if access and access_tag_whitelist[access] then
-      way.speed = railway_speeds[railway]   
-      way.direction = Way.bidirectional
     end
   elseif pedestrian_speeds[highway] and main_speeds[highway] then
     -- pedestrian areas
@@ -253,8 +243,8 @@ function way_function (way, numberOfNodesInWay)
   else
     -- regular ways
     if main_speeds[highway] then 
-          way.speed = main_speeds[highway]
-      elseif main_speeds[man_made] then 
+      way.speed = main_speeds[highway]
+    elseif main_speeds[man_made] then 
       way.speed = main_speeds[man_made]
     elseif access_tag_whitelist[access] then
       way.speed = default_speed
@@ -327,22 +317,23 @@ function way_function (way, numberOfNodesInWay)
 
   -- priorize bike relations
   speed_delta = 0
-  if networks.lcn and networks.lcn[way.id] then speed_delta = 4 end
-  if networks.rcn and networks.rcn[way.id] then speed_delta = 6 end
-  if networks.ncn and networks.ncn[way.id] then speed_delta = 8 end
+  if networks.lcn[way.id] or lcn == "yes" then speed_delta = 4 end
+  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 6 end
+  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 8 end
+  if networks.icn[way.id] or icn == "yes" then speed_delta = 8 end
   way.speed = way.speed + speed_delta
-  
+
   way.type = 1
   return 1
 end
 
 function turn_function (angle)
-    -- compute turn penalty as angle^2, with a left/right bias
-    k = turn_penalty/(90.0*90.0)
-  if angle>=0 then
-      return angle*angle*k*turn_bias
+  -- compute turn penalty as angle^2, with a left/right bias
+  k = turn_penalty / (90.0 * 90.0)
+  if angle >= 0 then
+    return angle * angle * k * turn_bias
   else
-      return angle*angle*k/turn_bias
-    end
+    return angle * angle * k / turn_bias
+  end
 end
 
