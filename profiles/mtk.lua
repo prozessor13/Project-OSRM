@@ -12,8 +12,9 @@ service_tag_restricted = { ["parking_aisle"] = true }
 
 default_speed = 16
 
+-- bicycling is allowed
 main_speeds = { 
-  ["cycleway"] = 18,
+  ["cycleway"] = 20,
   ["primary"] = 15,
   ["primary_link"] = 15,
   ["secondary"] = 18,
@@ -28,30 +29,17 @@ main_speeds = {
   ["track"] = 16,
   ["path"] = 16,
   ["footway"] = 16,
-  ["pedestrian"] = 5,
-  ["pushbike"] = 5,
+  ["pedestrian"] = 12,
   ["pier"] = 16,
   ["steps"] = 2
 }
 
-pedestrian_speeds = { 
+-- bicycle must be pushed (bicycling is not allowed)
+pushbike_speeds = {
   ["footway"] = 5,
   ["pedestrian"] = 5,
   ["pier"] = 5,
   ["steps"] = 2
-}
-
-railway_speeds = { 
-  ["train"] = 10,
-  ["railway"] = 10,
-  ["subway"] = 10,
-  ["light_rail"] = 10,
-  ["monorail"] = 10,
-  ["tram"] = 10
-}
-
-platform_speeds = { 
-  ["platform"] = 5
 }
 
 amenity_speeds = { 
@@ -230,12 +218,12 @@ function way_function (way, numberOfNodesInWay)
     else
       way.speed = route_speeds[route]
     end
-  elseif pedestrian_speeds[highway] and main_speeds[highway] then
+  elseif pushbike_speeds[highway] and main_speeds[highway] then
     -- pedestrian areas
     if access_tag_whitelist[access] then
       way.speed = main_speeds[highway]    -- biking 
     else
-      way.speed = pedestrian_speeds[highway]  -- pushing bikes
+      way.speed = pushbike_speeds[highway]  -- pushing bikes
     end
   elseif amenity and amenity_speeds[amenity] then
     -- parking areas
@@ -303,7 +291,7 @@ function way_function (way, numberOfNodesInWay)
   -- push bikes again oneways
   if way.direction == Way.oneway then
     way.direction = Way.bidirectional
-    way.speed_backward = main_speeds["pushbike"]
+    way.speed_backward = pushbike_speeds["footway"]
   end
 
   -- cycleways
