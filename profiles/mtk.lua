@@ -55,11 +55,11 @@ take_minimum_of_speeds    = true
 obey_oneway               = true
 obey_bollards             = false
 use_restrictions          = true
-ignore_areas              = true -- future feature
+
 traffic_signal_penalty    = 2
 u_turn_penalty            = 20
-turn_penalty              = 15
-turn_bias                 = 1.4
+left_turn_penalty         = 10
+right_turn_penalty        = 5
 
 -- End of globals
 
@@ -313,15 +313,5 @@ function way_function (way, numberOfNodesInWay)
 
   way.type = 1
   return 1
-end
-
-function turn_function (angle)
-  -- compute turn penalty as angle^2, with a left/right bias
-  k = turn_penalty / (90.0 * 90.0)
-  if angle >= 0 then
-    return angle * angle * k * turn_bias
-  else
-    return angle * angle * k / turn_bias
-  end
 end
 

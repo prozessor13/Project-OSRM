@@ -138,7 +138,16 @@ int main (int argc, char *argv[]) {
         ERR(lua_tostring(myLuaState,-1)<< " occured in scripting block");
     }
     speedProfile.uTurnPenalty = 10*lua_tointeger(myLuaState, -1);
-    speedProfile.hasTurnFunction = lua_function_exists( myLuaState, "turn_function" );
+
+    if(0 != luaL_dostring( myLuaState, "return left_turn_penalty\n")) {
+        ERR(lua_tostring(myLuaState,-1)<< " occured in scripting block");
+    }
+    speedProfile.leftTurnPenalty = 10*lua_tointeger(myLuaState, -1);
+
+    if(0 != luaL_dostring( myLuaState, "return right_turn_penalty\n")) {
+        ERR(lua_tostring(myLuaState,-1)<< " occured in scripting block");
+    }
+    speedProfile.rightTurnPenalty = 10*lua_tointeger(myLuaState, -1);
 
     std::vector<ImportEdge> edgeList;
     NodeID nodeBasedNodeNumber = readBinaryOSRMGraphFromStream(in, edgeList, bollardNodes, trafficLightNodes, &internalToExternalNodeMapping, inputRestrictions);

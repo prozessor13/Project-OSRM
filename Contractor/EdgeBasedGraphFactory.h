@@ -103,10 +103,11 @@ public:
 
 
     struct SpeedProfileProperties{
-        SpeedProfileProperties()  : trafficSignalPenalty(0), uTurnPenalty(0), hasTurnFunction(false) {}
+        SpeedProfileProperties()  : trafficSignalPenalty(0), uTurnPenalty(0), leftTurnPenalty(0), rightTurnPenalty(0) {}
         int trafficSignalPenalty;
         int uTurnPenalty;
-        bool hasTurnFunction;
+        int leftTurnPenalty;
+        int rightTurnPenalty;
     } speedProfile;
 private:
     boost::shared_ptr<_NodeBasedDynamicGraph>   _nodeBasedGraph;
@@ -145,7 +146,7 @@ public:
     void GetEdgeBasedEdges( DeallocatingVector< EdgeBasedEdge >& edges );
     void GetEdgeBasedNodes( DeallocatingVector< EdgeBasedNode> & nodes);
     void GetOriginalEdgeData( std::vector< OriginalEdgeData> & originalEdgeData);
-    short AnalyzeTurn(const NodeID u, const NodeID v, const NodeID w, unsigned& penalty, lua_State *myLuaState) const;
+    short AnalyzeTurn(const NodeID u, const NodeID v, const NodeID w) const;
     unsigned GetNumberOfNodes() const;
 };
 
