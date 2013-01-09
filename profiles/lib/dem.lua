@@ -9,7 +9,7 @@ local function _fname(lat, lon)
 end
 
 local function _altitude(fh, x, y)
-  fh:seek("set", ((_size - y) * _size + x) * 2)
+  fh:seek("set", ((_size - y - 1) * _size + x) * 2)
   local p, altitude = string.unpack(fh:read(2), "H<")
   return altitude
 end
