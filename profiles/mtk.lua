@@ -1,6 +1,5 @@
 require("profiles/lib/dem")
 
-
 -- Begin of globals
 barrier_whitelist = { [""] = true, ["bollard"] = true, ["entrance"] = true, ["cattle_grid"] = true, ["border_control"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true}
 access_tag_whitelist = { ["yes"] = true, ["permissive"] = true, ["designated"] = true }
@@ -81,8 +80,8 @@ if (osmFileName) then
 end
 
 function slower(speed, k)
-  k = k / 15 + 1
-  if k > 3 then k = 3 end
+  k = k / 2.2
+  if k > 15 then k = 15 end
   return speed / k
 end
 
@@ -128,7 +127,8 @@ function node_function (node)
     end
   end
   
-  node.altitude = altitude(node.lat/100000, node.lon/100000)
+  -- store as int value
+  node.altitude = altitude(node.lat/100000, node.lon/100000) * 100000
 
   return 1
 end
@@ -138,12 +138,12 @@ function segment_function (segment, startNode, targetNode, distance)
   if startNode.altitude <= 0 or targetNode.altitude <= 0 then return end
 
   -- calculate grade and do nothing for relative flat segments
-  local k = (targetNode.altitude - startNode.altitude) / distance * 100;
-  -- io.stderr:write("alt: " .. startNode.altitude .. "," .. targetNode.altitude .. ": " .. k .. "\n")
+  local k = (targetNode.altitude - startNode.altitude) / distance / 1000;
+  -- io.stderr:write("alt: " .. distance .. ": " .. startNode.altitude .. "," .. targetNode.altitude .. ": " .. k .. "\n")
   if k >= -1 and k <= 1 then return end
 
   -- increase / decrease speeds
-  -- io.stderr:write("speed1: " .. segment.speed .. " -- " .. segment.speed_backward .. "\n")
+  -- io.stderr:write("speed1(" .. k .. "): " .. segment.speed .. " -- " .. segment.speed_backward .. "\n")
   if segment.speed_backward == -1 then segment.speed_backward = segment.speed end
   if (k > 1) then
     segment.speed = slower(segment.speed, k)
@@ -305,10 +305,10 @@ function way_function (way, numberOfNodesInWay)
 
   -- priorize bike relations
   speed_delta = 0
-  if networks.lcn[way.id] or lcn == "yes" then speed_delta = 4 end
-  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 6 end
-  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 8 end
-  if networks.icn[way.id] or icn == "yes" then speed_delta = 8 end
+  if networks.lcn[way.id] or lcn == "yes" then speed_delta = 6 end
+  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 8 end
+  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 10 end
+  if networks.icn[way.id] or icn == "yes" then speed_delta = 10 end
   way.speed = way.speed + speed_delta
 
   way.type = 1

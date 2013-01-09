@@ -4,12 +4,19 @@ require("pack")
 local _f = {}
 local _size = 3600
 
-local function fname(lat, lon)
+local function _fname(lat, lon)
   return "dem/" .. math.floor(lat) .. "_" .. math.floor(lon) .. ".bin"
 end
 
+local function _altitude(fh, x, y)
+  fh:seek("set", ((_size - y) * _size + x) * 2)
+  local p, altitude = string.unpack(fh:read(2), "H<")
+  return altitude
+end
+
 function altitude(lat, lon)
-  local fname = fname(lat, lon)
+  -- get filehandle
+  local fname = _fname(lat, lon)
   if _f[fname] == -1 then return 0 end
   if not _f[fname] then
     local f = io.open(fname ,"rb")
@@ -22,9 +29,13 @@ function altitude(lat, lon)
     end
   end
 
-  local x = math.floor((lon - math.floor(lon)) * _size)
-  local y = math.floor((lat - math.floor(lat)) * _size)
-  _f[fname]:seek("set", (x * _size + y) * 2)
-  local p, altitude = string.unpack(_f[fname]:read(2), "H<")
-  return altitude
+  -- bilinear interpolation
+  local x, y = (lon - math.floor(lon)) * _size, (lat - math.floor(lat)) * _size
+  local ix, iy = math.floor(x), math.floor(y)
+  local p11 = _altitude(_f[fname], ix, iy)
+  local p21 = _altitude(_f[fname], ix + 1, iy)
+  local p12 = _altitude(_f[fname], ix, iy + 1)
+  local p22 = _altitude(_f[fname], ix + 1, iy + 1)
+  x = x - ix; y = y - iy
+  return (p11 * (1 - x) * (1 - y) + p21 * x * (1 - y) + p12 * (1 - x) * y + p22 * x * y)
 end
