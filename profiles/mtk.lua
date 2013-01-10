@@ -57,23 +57,28 @@ use_restrictions          = true
 
 traffic_signal_penalty    = 2
 u_turn_penalty            = 20
-left_turn_penalty         = 10
-right_turn_penalty        = 5
+left_turn_penalty         = 8
+right_turn_penalty        = 4
 
 -- End of globals
 
 -- read networks
-networks = { lcn={}, rcn={}, ncn={}, icn={} }
+networks = { names={}, lcn={}, rcn={}, ncn={}, icn={} }
 if (osmFileName) then
   require 'stringy'
   fname = string.gsub(osmFileName, ".osm.pbf", ".osrm.networks");
   f = io.open(fname, "r")
   if (f) then
-    for line in f:lines() do
+    local lines = f:lines()
+    networks['names'] = stringy.split(lines(), "|")
+    for line in lines do
       l = stringy.split(line, ",")
       type = table.remove(l, 1)
       for i, v in ipairs(l) do
-        if tonumber(v) then networks[type][tonumber(v)] = 1 end
+        local res = stringy.split(v, ";")
+        if tonumber(tonumber(res[1])) then
+          networks[type][tonumber(res[1])] = tonumber(res[2]) + 1
+        end
       end
     end
   end
@@ -187,7 +192,7 @@ function way_function (way, numberOfNodesInWay)
   local access = find_access_tag(way)
   
   -- only route on things with highway tag set (not buildings, boundaries, etc)
-    if (not highway or highway == '') and 
+  if (not highway or highway == '') and 
     (not route or route == '') and 
     (not railway or railway=='') and 
     (not amenity or amenity=='') then
@@ -195,18 +200,9 @@ function way_function (way, numberOfNodesInWay)
     end
     
   -- access
-    if access_tag_blacklist[access] then
+  if access_tag_blacklist[access] then
     return 0
     end
-
-  -- name 
-  if "" ~= ref then
-    way.name = ref
-  elseif "" ~= name then
-    way.name = name
-  else
-    way.name = highway    -- if no name exists, use way type
-  end
   
   if route_speeds[route] then
     -- ferries
@@ -304,12 +300,22 @@ function way_function (way, numberOfNodesInWay)
   end
 
   -- priorize bike relations
+  nameI = 0
   speed_delta = 0
   if networks.lcn[way.id] or lcn == "yes" then speed_delta = 6 end
-  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 8 end
-  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 10 end
-  if networks.icn[way.id] or icn == "yes" then speed_delta = 10 end
+  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 8; nameI = networks.rcn[way.id] or 0 end
+  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 10; nameI = networks.ncn[way.id] or 0 end
+  if networks.icn[way.id] or icn == "yes" then speed_delta = 10; nameI = networks.icn[way.id] or 0 end
   way.speed = way.speed + speed_delta
+
+  -- name 
+  if "" ~= name then
+    way.name = name
+  elseif nameI > 0 then
+    way.name = networks.names[nameI]
+  elseif "" ~= ref then
+    way.name = ref
+  end
 
   way.type = 1
   return 1

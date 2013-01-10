@@ -14,17 +14,25 @@ outfile = sys.argv[1].replace('.osm.pbf', '.osrm.networks')
 
 # simple class that handles the parsed OSM data.
 class Relation(object):
+    names = []
+    namesI = {}
     networks = {'icn': [], 'rcn': [], 'lcn': [], 'ncn': []}
 
     def check(self, relations):
         for osmid, tags, refs in relations:
             if tags.get('network') and tags['network'] in ('icn', 'rcn', 'ncn', 'lcn'):
-                for r in refs: self.networks[tags['network']].append(r[0])
+                if not self.namesI.get(str(osmid)):
+                    self.namesI[str(osmid)] = len(self.names)
+                    self.names.append(tags.get('name'))
+                for r in refs:
+                    network = str(r[0]) + ";" + str(self.namesI[str(osmid)])
+                    self.networks[tags['network']].append(network)
 
     def save(self, fname):
         f = open(fname, "w")
+        f.write("|".join(map(lambda x: x or "", self.names)).encode('utf8') + "\n")
         for k, v in self.networks.items():
-            f.write(k + "," + ",".join(map(lambda x: str(x), v)) + "\n");
+            f.write(k + "," + ",".join(map(lambda x: str(x), v)) + "\n")
         f.close()
 
 # instantiate counter and parser and start parsing
