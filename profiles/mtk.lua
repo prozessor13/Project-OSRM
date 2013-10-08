@@ -302,10 +302,10 @@ function way_function (way, numberOfNodesInWay)
   -- priorize bike relations
   nameI = 0
   speed_delta = 0
-  if networks.lcn[way.id] or lcn == "yes" then speed_delta = 6 end
-  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 8; nameI = networks.rcn[way.id] or 0 end
-  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 10; nameI = networks.ncn[way.id] or 0 end
   if networks.icn[way.id] or icn == "yes" then speed_delta = 10; nameI = networks.icn[way.id] or 0 end
+  if networks.ncn[way.id] or ncn == "yes" then speed_delta = 10; nameI = networks.ncn[way.id] or 0 end
+  if networks.rcn[way.id] or rcn == "yes" then speed_delta = 8; nameI = networks.rcn[way.id] or 0 end
+  if networks.lcn[way.id] or lcn == "yes" then speed_delta = 6 end
   way.speed = way.speed + speed_delta
 
   -- name 
@@ -315,6 +315,8 @@ function way_function (way, numberOfNodesInWay)
     way.name = networks.names[nameI]
   elseif "" ~= ref then
     way.name = ref
+  else
+    way.name = highway
   end
 
   way.type = 1
