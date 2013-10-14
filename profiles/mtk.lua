@@ -316,7 +316,7 @@ function way_function (way, numberOfNodesInWay)
   elseif "" ~= ref then
     way.name = ref
   else
-    way.name = highway
+    way.name = "TMP-" .. highway
   end
 
   way.type = 1
